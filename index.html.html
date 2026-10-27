@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>牌咖戰績簿</title>
+<style>
+:root {
+  --site-primary: #21483d;
+  --site-on-primary: #ffffff;
+  --site-secondary: #ead9b7;
+  --site-on-secondary: #30291e;
+  --site-background: #f6f4ee;
+  --site-on-background: #202922;
+  --site-font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  color-scheme: light dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--site-font-body); background: light-dark(#f6f4ee, #151b18); color: light-dark(#202922, #edf3ee); }
+#app { min-height: 100vh; width: 100%; background-color: light-dark(var(--site-background), #151b18); color: light-dark(var(--site-on-background), #edf3ee); border-radius: 0; }
+.topbar { background: var(--site-primary); color: var(--site-on-primary); padding: calc(26px * var(--site-spacing-scale)) max(20px, calc((100vw - 1050px)/2)); }
+.brand { display:flex; align-items:center; gap:14px; }
+.logo { display:grid; place-items:center; width:52px; height:52px; border-radius: calc(16px * var(--site-radius-scale)); background: var(--site-secondary); color: var(--site-on-secondary); font-size:28px; }
+h1 { font-size: calc(30px * var(--site-heading-scale)); line-height:1.15; margin:0; font-family:var(--site-font-heading); }
+.subtitle { color:#dce9e0; margin-top:6px; font-size:13px; letter-spacing:.12em; }
+main { max-width:1050px; margin:0 auto; padding:24px 18px 50px; }
+.tabs { display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
+.tab { border:1px solid light-dark(#d7ded8,#3b4940); border-radius:999px; padding:10px 16px; background:transparent; color:inherit; font:inherit; cursor:pointer; }
+.tab.active { background:var(--site-primary); color:var(--site-on-primary); border-color:var(--site-primary); }
+.stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:22px; }
+.stat, .panel { background:light-dark(#fff,#202823); border:1px solid light-dark(#e1e5df,#343f37); border-radius:calc(18px * var(--site-radius-scale)); }
+.stat { padding:16px; }
+.stat-label { font-size:13px; color:light-dark(#69766d,#b2c0b6); }
+.stat-value { font-size:25px; font-weight:750; margin-top:7px; }
+.panel { padding:20px; margin-bottom:18px; }
+.panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+h2 { font-size:19px; margin:0; }
+.muted { color:light-dark(#6b766f,#b4c0b7); font-size:13px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:end; }
+label { display:block; font-size:13px; color:light-dark(#5c6960,#bdc9c0); margin-bottom:6px; }
+input, select { width:100%; min-width:0; border:1px solid light-dark(#d6ddd7,#465249); background:light-dark(#fff,#161d19); color:inherit; border-radius:10px; padding:12px; font:inherit; }
+button { font:inherit; cursor:pointer; }
+.primary { border:0; border-radius:10px; padding:12px 16px; background:var(--site-primary); color:var(--site-on-primary); font-weight:700; white-space:nowrap; }
+.secondary { border:1px solid light-dark(#d6ddd7,#465249); border-radius:10px; padding:9px 12px; background:transparent; color:inherit; }
+.danger { color:#c54b45; }
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; min-width:420px; }
+th,td { text-align:left; padding:13px 9px; border-bottom:1px solid light-dark(#edf0ec,#364139); }
+th { font-size:12px; color:light-dark(#69766d,#b2c0b6); font-weight:600; }
+td:last-child, th:last-child { text-align:right; }
+.rank { display:inline-grid; place-items:center; width:29px; height:29px; border-radius:9px; background:light-dark(#f0eee7,#303a33); font-weight:750; }
+.amount { font-weight:750; font-variant-numeric:tabular-nums; }
+.positive { color:#17845d; } .negative { color:#d45b53; } .zero { color:light-dark(#68746c,#b5c0b7); }
+.empty { text-align:center; padding:26px 12px; color:light-dark(#778078,#aebbb1); }
+.history-item { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid light-dark(#edf0ec,#364139); }
+.history-item:last-child { border-bottom:0; }
+.history-name { font-weight:650; }
+.history-meta { font-size:12px; color:light-dark(#778078,#aebbb1); margin-top:4px; }
+.notice { background:light-dark(#f1eadb,#352f24); color:light-dark(#59492e,#eddfbf); border-radius:12px; padding:12px 14px; font-size:13px; line-height:1.55; margin-top:14px; }
+.footer { text-align:center; font-size:12px; color:light-dark(#788279,#9aa79d); padding:10px; }
+.game-picker { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; margin-bottom:16px; }
+.game-option { text-align:left; border:1px solid light-dark(#d6ddd7,#465249); border-radius:14px; padding:14px; background:light-dark(#fff,#161d19); color:inherit; }
+.game-option.active { border:2px solid var(--site-primary); background:light-dark(#edf4ef,#26372d); }
+.game-icon { font-size:24px; display:block; margin-bottom:7px; }
+.game-option strong { display:block; }
+.game-option small { display:block; color:light-dark(#69766d,#b2c0b6); margin-top:4px; line-height:1.4; }
+.personal-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.personal-form .wide { grid-column:1/-1; }
+.personal-record { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid light-dark(#edf0ec,#364139); }
+.personal-record:last-child { border-bottom:0; }
+.avatar-picker { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+.avatar-option { width:48px; height:48px; border:2px solid light-dark(#d6ddd7,#465249); border-radius:14px; background:light-dark(#fff,#161d19); font-size:25px; }
+.avatar-option.active { border-color:var(--site-primary); background:light-dark(#edf4ef,#26372d); box-shadow:0 0 0 2px color-mix(in srgb, var(--site-primary) 18%, transparent); }
+.player-avatar { display:inline-grid; place-items:center; width:32px; height:32px; border-radius:50%; background:light-dark(#f0eee7,#303a33); font-size:20px; vertical-align:middle; margin-right:8px; }
+.avatar-upload-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:16px; }
+.avatar-preview { width:64px; height:64px; object-fit:cover; border-radius:50%; border:2px solid light-dark(#d6ddd7,#465249); background:light-dark(#f0eee7,#303a33); }
+.player-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.avatar-option img { width:100%; height:100%; object-fit:cover; border-radius:11px; }
+.hidden { display:none !important; }
+@media(max-width:700px) { .form-grid { grid-template-columns:1fr 1fr; } .form-grid .wide { grid-column:1/-1; } .stats { gap:8px; } .stat { padding:12px; } .stat-value { font-size:21px; } .panel { padding:15px; } h1 { font-size:25px; } }
+@media(max-width:420px) { .stats { grid-template-columns:1fr 1fr; } .stats .stat:last-child { grid-column:1/-1; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">♠</div>
+      <div><h1>牌咖戰績簿</h1><div class="subtitle">FRIENDS · CARD GAME TRACKER</div></div>
+    </div>
+  </header>
+  <main>
+    <nav class="tabs" aria-label="主要功能">
+      <button class="tab active" data-tab="dashboard">🏆 戰績排行榜</button>
+      <button class="tab" data-tab="entry">＋ 記錄一場牌局</button>
+      <button class="tab" data-tab="history">🗂 歷史紀錄</button>
+      <button class="tab" data-tab="personal">👤 個人專區</button>
+    </nav>
+    <section id="dashboard">
+      <div class="stats">
+        <div class="stat"><div class="stat-label">累積牌局</div><div class="stat-value" id="gamesCount">0 場</div></div>
+        <div class="stat"><div class="stat-label">參與玩家</div><div class="stat-value" id="playersCount">0 人</div></div>
+        <div class="stat"><div class="stat-label">目前領先</div><div class="stat-value" id="leaderName">—</div></div>
+      </div>
+      <section class="panel">
+        <div class="panel-head"><h2>🏆 累積戰績排行榜</h2><span class="muted">依總輸贏排序</span></div>
+        <div class="table-wrap"><table><thead><tr><th>排名</th><th>玩家</th><th>參與場次</th><th>累積輸贏</th></tr></thead><tbody id="rankRows"></tbody></table></div>
+        <div class="empty" id="rankEmpty">還沒有戰績，記錄第一場牌局吧！</div>
+      </section>
+      <div class="notice">小提醒：每位玩家的輸贏金額請使用同一個計算單位。若是一般結算牌局，所有玩家的金額加總通常應為 0，記錄前可以先核對。</div>
+    </section>
+    <section id="entry" class="hidden">
+      <section class="panel">
+        <div class="panel-head"><h2>記錄一場牌局</h2><span class="muted">可加入多位玩家</span></div>
+        <div class="form-grid">
+          <div class="wide"><label>選擇遊戲類型</label><div class="game-picker" id="gamePicker">
+            <button type="button" class="game-option active" data-game="麻將"><span class="game-icon">🀄</span><strong>麻將</strong><small>麻將牌局輸贏</small></button>
+            <button type="button" class="game-option" data-game="射龍門"><span class="game-icon">🂡</span><strong>射龍門</strong><small>撲克牌下注結算</small></button>
+            <button type="button" class="game-option" data-game="車馬炮"><span class="game-icon">🐎</span><strong>車馬炮</strong><small>自訂每場輸贏</small></button>
+            <button type="button" class="game-option" data-game="撲克牌"><span class="game-icon">♠️</span><strong>其他撲克牌</strong><small>德州撲克等玩法</small></button>
+            <button type="button" class="game-option" data-game="其他"><span class="game-icon">🎲</span><strong>其他遊戲</strong><small>自訂遊戲名稱</small></button>
+          </div></div>
+          <div class="wide"><label for="customGame">自訂遊戲名稱（選「其他」時填寫）</label><input id="customGame" type="text" placeholder="例如：大老二、十三支" maxlength="40" /></div>
+          <div class="wide"><label for="gameDate">牌局日期</label><input id="gameDate" type="date" /></div>
+          <div><label for="playerName">玩家名字</label><input id="playerName" type="text" placeholder="例如：阿明" maxlength="30" /></div>
+          <div><label for="playerAmount">輸贏金額</label><input id="playerAmount" type="number" step="any" placeholder="贏填正數，輸填負數" /></div>
+          <div><button id="addPlayer" class="primary" style="width:100%">加入玩家</button></div>
+        </div>
+        <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>玩家</th><th>本場輸贏</th><th>操作</th></tr></thead><tbody id="draftRows"></tbody></table></div>
+        <div class="empty" id="draftEmpty">先輸入名字與金額，再按「加入玩家」。</div>
+        <div class="panel-head" style="margin-top:18px;margin-bottom:0"><span id="draftSummary" class="muted">目前 0 位玩家 · 金額合計 0</span><button id="saveGame" class="primary">儲存這場牌局</button></div>
+      </section>
+      <div class="notice">輸贏金額規則：贏錢填正數（例如 500），輸錢填負數（例如 -500）。此示範版將資料保存在目前瀏覽器中。</div>
+    </section>
+    <section id="history" class="hidden">
+      <section class="panel">
+        <div class="panel-head"><h2>歷史牌局</h2><button id="exportCsv" class="secondary">匯出 CSV</button></div>
+        <div id="historyRows"></div><div id="historyEmpty" class="empty">目前沒有歷史紀錄。</div>
+      </section>
+    </section>
+    <section id="personal" class="hidden">
+      <section class="panel">
+        <div class="panel-head"><h2>🎭 設定我的玩家頭貼</h2><span class="muted">選一個代表你的圖示</span></div>
+        <p class="muted">先在下方個人專區填入你的玩家名字，再點選喜歡的頭貼。排行榜會顯示已設定的圖示。</p>
+        <div class="avatar-picker" id="avatarPicker" aria-label="選擇玩家頭貼">
+          <button type="button" class="avatar-option" data-avatar="😎" aria-label="酷酷的"></button><button type="button" class="avatar-option" data-avatar="🐼" aria-label="熊貓"></button><button type="button" class="avatar-option" data-avatar="🐱" aria-label="貓咪"></button><button type="button" class="avatar-option" data-avatar="🐶" aria-label="狗狗"></button><button type="button" class="avatar-option" data-avatar="🦊" aria-label="狐狸"></button><button type="button" class="avatar-option" data-avatar="🐸" aria-label="青蛙"></button><button type="button" class="avatar-option" data-avatar="🐯" aria-label="老虎"></button><button type="button" class="avatar-option" data-avatar="🐲" aria-label="龍"></button><button type="button" class="avatar-option" data-avatar="👻" aria-label="幽靈"></button><button type="button" class="avatar-option" data-avatar="🤖" aria-label="機器人"></button><button type="button" class="avatar-option" data-avatar="🀄" aria-label="麻將"></button><button type="button" class="avatar-option" data-avatar="♠️" aria-label="黑桃"></button><button type="button" class="avatar-option" data-avatar="🐹" aria-label="倉鼠"></button><button type="button" class="avatar-option" data-avatar="🐰" aria-label="兔子"></button><button type="button" class="avatar-option" data-avatar="🐻" aria-label="熊熊"></button><button type="button" class="avatar-option" data-avatar="🐨" aria-label="無尾熊"></button><button type="button" class="avatar-option" data-avatar="🐙" aria-label="章魚"></button><button type="button" class="avatar-option" data-avatar="🦈" aria-label="鯊魚"></button><button type="button" class="avatar-option" data-avatar="👽" aria-label="外星人"></button><button type="button" class="avatar-option" data-avatar="💀" aria-label="骷髏"></button><button type="button" class="avatar-option" data-avatar="🍺" aria-label="啤酒"></button><button type="button" class="avatar-option" data-avatar="🍜" aria-label="拉麵"></button><button type="button" class="avatar-option" data-avatar="💰" aria-label="財神"></button><button type="button" class="avatar-option" data-avatar="🃏" aria-label="鬼牌"></button><button type="button" class="avatar-option" data-avatar="🦁" aria-label="獅子"></button><button type="button" class="avatar-option" data-avatar="🐮" aria-label="牛"></button><button type="button" class="avatar-option" data-avatar="🐷" aria-label="豬"></button><button type="button" class="avatar-option" data-avatar="🐵" aria-label="猴子"></button><button type="button" class="avatar-option" data-avatar="🐔" aria-label="公雞"></button><button type="button" class="avatar-option" data-avatar="🐧" aria-label="企鵝"></button><button type="button" class="avatar-option" data-avatar="🐦" aria-label="小鳥"></button><button type="button" class="avatar-option" data-avatar="🦆" aria-label="鴨子"></button><button type="button" class="avatar-option" data-avatar="🦉" aria-label="貓頭鷹"></button><button type="button" class="avatar-option" data-avatar="🦄" aria-label="獨角獸"></button><button type="button" class="avatar-option" data-avatar="🐴" aria-label="馬"></button><button type="button" class="avatar-option" data-avatar="🐑" aria-label="綿羊"></button><button type="button" class="avatar-option" data-avatar="🦒" aria-label="長頸鹿"></button><button type="button" class="avatar-option" data-avatar="🐘" aria-label="大象"></button><button type="button" class="avatar-option" data-avatar="🦛" aria-label="河馬"></button><button type="button" class="avatar-option" data-avatar="🦏" aria-label="犀牛"></button><button type="button" class="avatar-option" data-avatar="🐊" aria-label="鱷魚"></button><button type="button" class="avatar-option" data-avatar="🐢" aria-label="烏龜"></button><button type="button" class="avatar-option" data-avatar="🦎" aria-label="蜥蜴"></button><button type="button" class="avatar-option" data-avatar="🐬" aria-label="海豚"></button><button type="button" class="avatar-option" data-avatar="🐳" aria-label="鯨魚"></button><button type="button" class="avatar-option" data-avatar="🦭" aria-label="海豹"></button><button type="button" class="avatar-option" data-avatar="🦀" aria-label="螃蟹"></button><button type="button" class="avatar-option" data-avatar="🦞" aria-label="龍蝦"></button><button type="button" class="avatar-option" data-avatar="🦐" aria-label="蝦子"></button><button type="button" class="avatar-option" data-avatar="🦋" aria-label="蝴蝶"></button><button type="button" class="avatar-option" data-avatar="🐝" aria-label="蜜蜂"></button><button type="button" class="avatar-option" data-avatar="🐞" aria-label="瓢蟲"></button><button type="button" class="avatar-option" data-avatar="🐌" aria-label="蝸牛"></button><button type="button" class="avatar-option" data-avatar="🐿️" aria-label="松鼠"></button><button type="button" class="avatar-option" data-avatar="🦔" aria-label="刺蝟"></button><button type="button" class="avatar-option" data-avatar="🦦" aria-label="水獺"></button><button type="button" class="avatar-option" data-avatar="🦥" aria-label="樹懶"></button><button type="button" class="avatar-option" data-avatar="🦚" aria-label="孔雀"></button>
+        </div>
+        <div class="muted" id="avatarStatus" style="margin-top:12px">尚未設定頭貼</div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>👤 個人專區</h2><span class="muted">不列入排行榜</span></div>
+        <p class="muted">記錄自己當天每一局的輸贏，適合私人備忘或單人追蹤；這裡的資料不會影響朋友排行榜。</p>
+        <div class="personal-form">
+          <div><label for="personalName">你的名字</label><input id="personalName" type="text" placeholder="例如：阿明" maxlength="30" /></div>
+          <div><label for="personalDate">日期</label><input id="personalDate" type="date" /></div>
+          <div><label for="personalGame">遊戲類型</label><input id="personalGame" type="text" placeholder="例如：麻將、射龍門" maxlength="40" /></div>
+          <div><label for="personalAmount">本局輸贏金額</label><input id="personalAmount" type="number" step="any" placeholder="贏填正數，輸填負數" /></div>
+          <div class="wide"><label for="personalNote">備註（選填）</label><input id="personalNote" type="text" placeholder="例如：第二將、跟誰打、當天心得" maxlength="120" /></div>
+          <div class="wide"><button id="savePersonal" class="primary" style="width:100%">新增個人紀錄</button></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2 id="personalHeading">我的個人紀錄</h2><span id="personalTotal" class="amount">累積 +0</span></div>
+        <div id="personalRows"></div><div id="personalEmpty" class="empty">輸入名字並新增第一筆個人紀錄吧！</div>
+      </section>
+      <div class="notice">個人專區與排行榜分開儲存。提醒：目前資料保存在這台裝置的瀏覽器中，不會自動同步到其他人的裝置。</div>
+    </section>
+    <div class="footer">牌咖戰績簿 · 個人牌局紀錄工具</div>
+  </main>
+</div>
+<script>
+(() => {
+  const STORAGE_KEY = 'card-scorebook-v1';
+  const PERSONAL_STORAGE_KEY = 'card-scorebook-personal-v1';
+  const AVATAR_STORAGE_KEY = 'card-scorebook-avatars-v1';
+  let games = [];
+  let personalRecords = [];
+  let playerAvatars = {};
+  let draft = [];
+  let selectedGame = '麻將';
+  try { games = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); if (!Array.isArray(games)) games = []; } catch (_) { games = []; }
+  try { personalRecords = JSON.parse(localStorage.getItem(PERSONAL_STORAGE_KEY) || '[]'); if (!Array.isArray(personalRecords)) personalRecords = []; } catch (_) { personalRecords = []; }
+  try { playerAvatars = JSON.parse(localStorage.getItem(AVATAR_STORAGE_KEY) || '{}'); if (!playerAvatars || typeof playerAvatars !== 'object' || Array.isArray(playerAvatars)) playerAvatars = {}; } catch (_) { playerAvatars = {}; }
+  const $ = id => document.getElementById(id);
+  const today = new Date();
+  $('gameDate').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  $('personalDate').value = $('gameDate').value;
+  const money = n => `${n > 0 ? '+' : ''}${Number(n).toLocaleString('zh-TW',{maximumFractionDigits:2})}`;
+  const cls = n => n > 0 ? 'positive' : n < 0 ? 'negative' : 'zero';
+  const safe = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const avatarFor = name => playerAvatars[name] || '🙂';
+  const avatarMarkup = name => safe(avatarFor(name));
+  function renderAvatars() {
+    const name = $('personalName').value.trim();
+    document.querySelectorAll('[data-avatar]').forEach(btn => {
+      btn.textContent = btn.dataset.avatar;
+      btn.classList.toggle('active', !!name && avatarFor(name) === btn.dataset.avatar);
+    });
+    const avatar = name ? avatarFor(name) : '🙂';
+    $('avatarStatus').textContent = name ? `${name} 的頭貼：${avatar}（點選圖示即可儲存）` : '請先在下方「你的名字」輸入玩家名字，再選擇喜歡的圖示。';
+  }
+  function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(games)); render(); }
+  function persistPersonal() { localStorage.setItem(PERSONAL_STORAGE_KEY, JSON.stringify(personalRecords)); renderPersonal(); }
+  function getTotals() {
+    const people = {};
+    games.forEach(g => g.players.forEach(p => {
+      if (!people[p.name]) people[p.name] = {name:p.name,total:0,games:0};
+      people[p.name].total += Number(p.amount); people[p.name].games += 1;
+    }));
+    return Object.values(people).sort((a,b) => b.total-a.total || a.name.localeCompare(b.name,'zh-Hant'));
+  }
+  function render() {
+    const totals = getTotals();
+    $('gamesCount').textContent = `${games.length} 場`;
+    $('playersCount').textContent = `${totals.length} 人`;
+    $('leaderName').textContent = totals.length ? totals[0].name : '—';
+    $('rankRows').innerHTML = totals.map((p,i) => `<tr><td><span class="rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</span></td><td><span class="player-avatar">${avatarMarkup(p.name)}</span><strong>${safe(p.name)}</strong></td><td>${p.games}</td><td class="amount ${cls(p.total)}">${money(p.total)}</td></tr>`).join('');
+    $('rankEmpty').classList.toggle('hidden', totals.length > 0);
+    $('historyRows').innerHTML = [...games].reverse().map(g => `<div class="history-item"><div><div class="history-name">${safe(g.date)} · ${safe(g.game || '未分類')} · ${g.players.length} 位玩家</div><div class="history-meta">${g.players.map(p=>safe(p.name)).join('、')}　·　合計 ${money(g.players.reduce((s,p)=>s+Number(p.amount),0))}</div></div><button class="secondary danger" data-delete="${safe(g.id)}">刪除</button></div>`).join('');
+    $('historyEmpty').classList.toggle('hidden', games.length > 0);
+    $('historyRows').querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => {
+      if (!confirm('確定刪除這場牌局？此動作無法復原。')) return;
+      games = games.filter(g => g.id !== btn.dataset.delete); persist();
+    }));
+    renderDraft();
+    renderPersonal();
+  }
+  function renderPersonal() {
+    const name = $('personalName').value.trim();
+    const records = personalRecords.filter(r => r.name === name).sort((a,b) => b.date.localeCompare(a.date) || b.createdAt-a.createdAt);
+    const total = records.reduce((sum,r) => sum + Number(r.amount), 0);
+    $('personalHeading').textContent = name ? `${name} 的個人紀錄` : '我的個人紀錄';
+    $('personalTotal').textContent = `累積 ${money(total)}`;
+    $('personalTotal').className = `amount ${cls(total)}`;
+    $('personalRows').innerHTML = records.map(r => `<div class="personal-record"><div><div class="history-name">${safe(r.date)} · ${safe(r.game || '未分類')}</div><div class="history-meta">${safe(r.note || '無備註')}</div></div><div style="display:flex;align-items:center;gap:10px"><span class="amount ${cls(r.amount)}">${money(Number(r.amount))}</span><button class="secondary danger" data-personal-delete="${safe(r.id)}">刪除</button></div></div>`).join('');
+    $('personalEmpty').classList.toggle('hidden', records.length > 0);
+    $('personalRows').querySelectorAll('[data-personal-delete]').forEach(btn => btn.addEventListener('click', () => {
+      if (!confirm('確定刪除這筆個人紀錄？')) return;
+      personalRecords = personalRecords.filter(r => r.id !== btn.dataset.personalDelete); persistPersonal();
+    }));
+  }
+  function renderDraft() {
+    $('draftRows').innerHTML = draft.map((p,i) => `<tr><td>${safe(p.name)}</td><td class="amount ${cls(p.amount)}">${money(p.amount)}</td><td><button class="secondary danger" data-remove="${i}">移除</button></td></tr>`).join('');
+    $('draftEmpty').classList.toggle('hidden', draft.length > 0);
+    const sum = draft.reduce((s,p)=>s+Number(p.amount),0);
+    $('draftSummary').textContent = `目前 ${draft.length} 位玩家 · 金額合計 ${money(sum)}`;
+    $('draftRows').querySelectorAll('[data-remove]').forEach(btn => btn.addEventListener('click', () => { draft.splice(Number(btn.dataset.remove),1); renderDraft(); }));
+  }
+  function showTab(tab) {
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active',b.dataset.tab===tab));
+    ['dashboard','entry','history','personal'].forEach(id => $(id).classList.toggle('hidden',id!==tab));
+  }
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click',()=>showTab(b.dataset.tab)));
+  $('personalName').addEventListener('input', renderPersonal);
+  $('personalName').addEventListener('input', renderAvatars);
+  document.querySelectorAll('[data-avatar]').forEach(btn => btn.addEventListener('click', () => {
+    const name = $('personalName').value.trim();
+    if (!name) { alert('請先在下方「你的名字」輸入玩家名字，再設定頭貼。'); $('personalName').focus(); return; }
+    playerAvatars[name] = btn.dataset.avatar;
+    localStorage.setItem(AVATAR_STORAGE_KEY, JSON.stringify(playerAvatars));
+    renderAvatars(); render();
+  }));
+  $('savePersonal').addEventListener('click', () => {
+    const name = $('personalName').value.trim();
+    const date = $('personalDate').value;
+    const game = $('personalGame').value.trim();
+    const raw = $('personalAmount').value;
+    if (!name) { alert('請先輸入你的名字。'); $('personalName').focus(); return; }
+    if (!date) { alert('請選擇日期。'); $('personalDate').focus(); return; }
+    if (!game) { alert('請輸入遊戲類型。'); $('personalGame').focus(); return; }
+    if (raw === '' || !Number.isFinite(Number(raw))) { alert('請輸入有效的輸贏金額。'); $('personalAmount').focus(); return; }
+    personalRecords.push({id:`${Date.now()}-${Math.random().toString(36).slice(2,8)}`,name,date,game,amount:Number(raw),note:$('personalNote').value.trim(),createdAt:Date.now()});
+    $('personalGame').value=''; $('personalAmount').value=''; $('personalNote').value=''; persistPersonal(); alert('個人紀錄已新增，不會列入排行榜。');
+  });
+  document.querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => {
+    selectedGame = b.dataset.game;
+    document.querySelectorAll('[data-game]').forEach(option => option.classList.toggle('active', option === b));
+    $('customGame').disabled = selectedGame !== '其他';
+    $('customGame').placeholder = selectedGame === '其他' ? '例如：大老二、十三支' : '只有選擇「其他」時需要填寫';
+  }));
+  $('customGame').disabled = true;
+  $('addPlayer').addEventListener('click', () => {
+    const name = $('playerName').value.trim(); const raw = $('playerAmount').value;
+    if (!name) { alert('請先輸入玩家名字。'); $('playerName').focus(); return; }
+    if (raw === '' || !Number.isFinite(Number(raw))) { alert('請輸入有效的輸贏金額。'); $('playerAmount').focus(); return; }
+    draft.push({name,amount:Number(raw)}); $('playerName').value=''; $('playerAmount').value=''; $('playerName').focus(); renderDraft();
+  });
+  $('playerAmount').addEventListener('keydown',e=>{if(e.key==='Enter') $('addPlayer').click();});
+  $('saveGame').addEventListener('click', () => {
+    if (draft.length < 2) { alert('一場牌局至少需要 2 位玩家，才能儲存。'); return; }
+    const date = $('gameDate').value; if (!date) { alert('請選擇牌局日期。'); return; }
+    const total = draft.reduce((s,p)=>s+Number(p.amount),0);
+    if (Math.abs(total) > 0.00001 && !confirm(`本場所有玩家金額合計為 ${money(total)}，並非 0。仍要儲存嗎？`)) return;
+    const gameName = selectedGame === '其他' ? $('customGame').value.trim() : selectedGame;
+    if (!gameName) { alert('請輸入自訂遊戲名稱。'); $('customGame').focus(); return; }
+    games.push({id:`${Date.now()}-${Math.random().toString(36).slice(2,8)}`,date,game:gameName,players:draft.map(p=>({...p}))});
+    draft=[]; persist(); showTab('dashboard'); alert('牌局已儲存！');
+  });
+  $('exportCsv').addEventListener('click', () => {
+    if (!games.length) { alert('目前沒有可匯出的紀錄。'); return; }
+    const rows = [['日期','遊戲類型','玩家','輸贏金額']]; games.forEach(g=>g.players.forEach(p=>rows.push([g.date,g.game || '未分類',p.name,p.amount])));
+    const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+    const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'})); const a=document.createElement('a'); a.href=url; a.download='牌咖戰績.csv'; a.click(); URL.revokeObjectURL(url);
+  });
+  render();
+  renderAvatars();
+})();
+</script>
+</body>
+</html>
